@@ -311,6 +311,19 @@ __global__ void FillOnes(float *vec, int size)
     vec[idx] = 1.0f;
 }
 
+
+void printMatrix(float *matrix, int width, int height, char* strMat) {
+  int i = 0;
+  int j = 0;
+  printf("PRINTING MATRIX: %s", strMat );
+  for(j = 0; j<height; j++) {
+  for(i = 0; i<width; i++) {
+    printf("%.6f  ", matrix[i +j*width]);
+  }
+  printf("\n");
+}
+}
+
 /**
  * Computes the backpropagation results of the Softmax loss for each result in a batch.
  * Uses the softmax values obtained from forward propagation to compute the difference.
@@ -788,17 +801,6 @@ struct TrainingContext
     }
 };
 
-void printMatrix(float *matrix, int width, int height, char* strMat) {
-  int i = 0;
-  int j = 0;
-  printf("PRINTING MATRIX: %s", strMat );
-  for(j = 0; j<height; j++) {
-  for(i = 0; i<width; i++) {
-    printf("%.6f  ", matrix[i +j*width]);
-  }
-  printf("\n");
-}
-}
 
 void validatingCudnnConvolutionForward(){
 
