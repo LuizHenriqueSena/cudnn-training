@@ -549,6 +549,7 @@ struct TrainingContext
         checkCudaErrors(cudaSetDevice(m_gpuid));
 
         // Conv1 layer
+        printMatrix(data, 25, 25, "data");
         checkCUDNN(cudnnConvolutionForward(cudnnHandle, &alpha, dataTensor,
                                            data, conv1filterDesc, pconv1, conv1Desc,
                                            conv1algo, workspace, m_workspaceSize, &beta,
@@ -792,7 +793,7 @@ void printMatrix(float *matrix, int width, int height, char* strMat) {
   int j = 0;
   printf("PRINTING MATRIX: %s", strMat );
   for(j = 0; j<height; j++) {
-  for(i = 0; i< width; i++) {
+  for(i = 0; i<width; i++) {
     printf("%.6f  ", matrix[i +j*width]);
   }
   printf("\n");
@@ -1019,6 +1020,7 @@ int main(int argc, char **argv)
         context.ForwardPropagation(d_data, d_conv1, d_pool1, d_conv2, d_pool2, d_fc1, d_fc1relu, d_fc2, d_fc2smax,
                                    d_pconv1, d_pconv1bias, d_pconv2, d_pconv2bias, d_pfc1, d_pfc1bias, d_pfc2, d_pfc2bias,
                                    d_cudnn_workspace, d_onevec);
+        return;
 
         // Backward propagation
         context.Backpropagation(conv1, pool1, conv2, pool2,
