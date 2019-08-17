@@ -858,6 +858,7 @@ int main(int argc, char **argv)
     }
 
     // Create the LeNet network architecture
+    printf("width and height are : %d %d \n", width, height);
     ConvBiasLayer conv1((int)channels, 20, 5, (int)width, (int)height);
     MaxPoolLayer pool1(2, 2);
     ConvBiasLayer conv2(conv1.out_channels, 50, 5, conv1.out_width / pool1.stride, conv1.out_height / pool1.stride);
