@@ -1,0 +1,3 @@
+/home/luiz/Projetos/anns/luiz_cudnn/cudnn-training/build/CMakeFiles/edit_cache.dir
+/home/luiz/Projetos/anns/luiz_cudnn/cudnn-training/build/CMakeFiles/rebuild_cache.dir
+/home/luiz/Projetos/anns/luiz_cudnn/cudnn-training/build/CMakeFiles/trainlenet.dir

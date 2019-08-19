@@ -324,6 +324,20 @@ void printMatrix(float *matrix, int width, int height, char* strMat) {
 }
 }
 
+void printMatrixDevice(float *matrixDevice, int tamanho, int width, int height, char* strMat) {
+  int i = 0;
+  int j = 0;
+  float * matrix = (float*) malloc(sizeof(float)*tamanho);
+  cudaMemcpyAsync(matrix, matrixDevice, sizeof(float) * tamanho,  cudaMemcpyDeviceToHost);
+  printf("PRINTING MATRIX: %s", strMat );
+  for(j = 0; j<height; j++) {
+  for(i = 0; i<width; i++) {
+    printf("%.6f  ", matrix[i +j*width]);
+  }
+  printf("\n");
+}
+}
+
 /**
  * Computes the backpropagation results of the Softmax loss for each result in a batch.
  * Uses the softmax values obtained from forward propagation to compute the difference.
@@ -562,7 +576,7 @@ struct TrainingContext
         checkCudaErrors(cudaSetDevice(m_gpuid));
 
         // Conv1 layer
-        printMatrix(data, 25, 25, "data");
+        printMatrixDevice(data,28*28 ,28, 28, "data");
         checkCUDNN(cudnnConvolutionForward(cudnnHandle, &alpha, dataTensor,
                                            data, conv1filterDesc, pconv1, conv1Desc,
                                            conv1algo, workspace, m_workspaceSize, &beta,
@@ -802,8 +816,44 @@ struct TrainingContext
 };
 
 
-void validatingCudnnConvolutionForward(){
+void validatingCudnnConvolutionForward(int inchannel, int w, int h, int outchannel, int kernel, int strides, float* A, float* B, float* C){
+  float *input;
+  float *output;
+  float *weights;
 
+  int outputDim = (w - kernel + 1)*(h - kernel + 1);
+
+  unsigned int counterX = 0, counterY = 0, counterZ = 0;
+  float result = 0;
+  for(counterZ=0; counterZ<outputDim; counterZ++){
+    result = 0;
+    for(counterY=0; counterY<kernel; counterY++) {
+      for(counterX=0;counterX<kernel; counterX++) {
+        result =  (A[counterX + counterY*kernel] * B[counterZ + counterX*w + counterY]) + result;
+        }
+    }
+    C[counterZ] = result;
+  }
+
+}
+
+void validatingCudnnMaxPoolingForward(int size, int strides, float* A, float* B, int inw, int inh) {
+  int counterX, counterY, counterZ;
+  float bigger;
+  int outputDim = (inw/(size*stride)+1)*(inh/(size*stride)+1);
+for(counterZ=0; counterZ<outputDim; counterZ++){
+  for(counterY=0; counterY<size; counterY++) {
+  for(counterX=0;counterX<size; counterX++) {
+        if(counterY==0 && counterX==0) {
+          bigger = A[counterX + counterY*inw + counterZ];
+        }else if(A[counterX + counterY*inw + counterZ] > bigger) {
+          bigger = A[counterX + counterY*inw + counterZ];
+        }
+
+  }
+  B[counterZ] = bigger;
+}
+}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -818,6 +868,7 @@ int main(int argc, char **argv)
 //      printf("PRINTING MATRIX: %s \n", strMat );
     size_t width, height, channels = 1;
 
+    printf("width and height and channels are : %d %d %d \n", width, height, channels);
     // Open input data
     printf("Reading input data\n");
 
@@ -858,7 +909,7 @@ int main(int argc, char **argv)
     }
 
     // Create the LeNet network architecture
-    printf("width and height are : %d %d \n", width, height);
+    printf("width and height and channels are : %d %d %d \n", width, height, channels);
     ConvBiasLayer conv1((int)channels, 20, 5, (int)width, (int)height);
     MaxPoolLayer pool1(2, 2);
     ConvBiasLayer conv2(conv1.out_channels, 50, 5, conv1.out_width / pool1.stride, conv1.out_height / pool1.stride);
@@ -1023,6 +1074,7 @@ int main(int argc, char **argv)
         context.ForwardPropagation(d_data, d_conv1, d_pool1, d_conv2, d_pool2, d_fc1, d_fc1relu, d_fc2, d_fc2smax,
                                    d_pconv1, d_pconv1bias, d_pconv2, d_pconv2bias, d_pfc1, d_pfc1bias, d_pfc2, d_pfc2bias,
                                    d_cudnn_workspace, d_onevec);
+                                   printMatrixDevice(d_conv1, context.m_batchSize * conv1.out_channels * conv1.out_height* conv1.out_width,conv1.out_height, conv1.out_width, "Matrix saida convo" );
         return;
 
         // Backward propagation
